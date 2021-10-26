@@ -1,3 +1,4 @@
+import { TestBed } from '@angular/core/testing';
 import { any } from 'cypress/types/bluebird';
 import { CalculatorService } from './calculator.service';
 import { LoggerService } from './logger.service';
@@ -7,7 +8,18 @@ describe('CalculatorService', () => {
 
   beforeEach(() => {
     loggerSpy = jasmine.createSpyObj('LoggerService', ['log']);
-    calc = new CalculatorService(loggerSpy);
+
+    TestBed.configureTestingModule({
+      providers: [
+        CalculatorService,
+        {
+          provide: LoggerService,
+          useValue: loggerSpy,
+        },
+      ],
+    });
+
+    calc = TestBed.inject(CalculatorService);
   });
 
   it('should add two numbers', () => {
