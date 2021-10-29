@@ -1,10 +1,12 @@
-import { COURSES } from './../../../../server/db-data';
+import { COURSES, findLessonsForCourse } from './../../../../server/db-data';
 import { TestBed } from '@angular/core/testing';
 import { CoursesService } from './courses.service';
 import {
   HttpClientTestingModule,
   HttpTestingController,
 } from '@angular/common/http/testing';
+import { Course } from '../model/course';
+import { HttpErrorResponse } from '@angular/common/http';
 
 describe('CoursesService', () => {
   let coursesService: CoursesService;
@@ -59,6 +61,71 @@ describe('CoursesService', () => {
 
     req.flush(COURSES[12]);
   });
+
+  it("should save a course", () => {
+
+    const changes: Partial<Course> = {
+      titles: { description: "This is the new description" }
+    }
+
+    coursesService.saveCourse(12, changes)
+      .subscribe(course => {
+        expect(course.id).toBe(12);
+        expect(course.titles.description).toEqual(changes.titles.description);
+      })
+
+    const request = http.expectOne("http://localhost:9000/api/courses/12");
+    expect(request.request.method).toBe("PUT");
+    expect(request.request.body.titles.description).toBe(changes.titles.description);
+
+    request.flush({
+      ...COURSES[12],
+      ...changes
+    })
+
+  })
+
+  it("should fail when it attempts to save a course", () => {
+    const changes: Partial<Course> = { titles: { description: "New Description" } };
+
+    coursesService.saveCourse(12, changes)
+      .subscribe(() => fail("Error occured when trying to save course"), (error: HttpErrorResponse) => {
+
+        expect(error.status).toBe(500);
+
+      });
+
+      const req = http.expectOne("http://localhost:9000/api/courses/12");
+      expect(req.request.method).toBe("PUT");
+
+      req.flush("Save course failed!", {
+        status: 500,
+        statusText: "Error occured when trying to save course"
+      })
+
+  })
+
+  it("should retrieve all lesssons for course", () => {
+
+    coursesService.findLessons(12)
+      .subscribe(
+        lessons => {
+          expect(lessons.length).toBe(3);
+        }
+      )
+
+    const req = http.expectOne((req) => req.url == "http://localhost:9000/api/lessons");
+
+    expect(req.request.method).toBe("GET");
+    expect(req.request.params.get("courseId")).toBe("12");
+    expect(req.request.params.get("filter")).toBe("");
+    expect(req.request.params.get("sortOrder")).toBe("asc");
+    expect(req.request.params.get("pageNumber")).toBe("0");
+    expect(req.request.params.get("pageSize")).toBe("3");
+
+    req.flush(findLessonsForCourse(12).slice(0, 3))
+
+  })
 
   afterEach(() => {
     http.verify();
