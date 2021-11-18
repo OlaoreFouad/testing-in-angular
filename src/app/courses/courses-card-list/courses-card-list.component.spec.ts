@@ -35,6 +35,7 @@ describe('CoursesCardListComponent', () => {
 
   it('should display the course list', () => {
     component.courses = setupCourses();
+    fixture.detectChanges();
 
     // check if the the cards are being displayed
     const cards = el.queryAll(By.css('.course-card'));
@@ -46,6 +47,29 @@ describe('CoursesCardListComponent', () => {
   });
 
   it('should display the first course', () => {
-    pending();
+    component.courses = setupCourses();
+    fixture.detectChanges();
+    const firstCourse = component.courses[0];
+
+    // get all the cards currently displayed.
+    const cards = el.queryAll(By.css('.course-card'));
+
+    expect(cards).toBeTruthy();
+
+    // get the first card
+    const firstCard = cards[0];
+
+    const firstCardTitle: HTMLElement =
+      firstCard.nativeElement.querySelector('mat-card-title');
+    const firstCardContent: HTMLElement =
+      firstCard.nativeElement.querySelector('mat-card-content');
+
+    expect(firstCard).toBeTruthy();
+    expect(firstCardTitle.textContent).toBe(firstCourse.titles.description);
+    expect(firstCardContent.textContent).toBe(
+      firstCourse.titles.longDescription
+    );
+
+    console.log(firstCard.nativeElement.outerHTML);
   });
 });
